@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shop_app/providers/cart.dart';
-import 'package:shop_app/screens/Cart_screen.dart';
-import 'package:shop_app/widgets/App_drawer.dart';
-import 'package:shop_app/widgets/badge.dart';
-import 'package:shop_app/widgets/product_grid.dart';
+import 'package:shop_app/providers/products_provider.dart';
+import '../providers/cart.dart';
+import '../screens/Cart_screen.dart';
+import '../widgets/App_drawer.dart';
+import '../widgets/badge.dart';
+import '../widgets/product_grid.dart';
 
 enum FilteredItems { Favorite, AllProducts }
 
@@ -15,6 +16,23 @@ class ProductOverviewScreen extends StatefulWidget {
 
 class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
   var showOnlyFavorite = false;
+  var _isInit = true; // to ensure it run for the first time
+  var _isLoading = false;
+
+  void didChangeDependencies() {
+    if (_isInit) {
+      setState(() {
+        _isLoading = true;
+      });
+      Provider.of<ProductsProvider>(context).fetchAndSetProducts().then((_) {
+        setState(() {
+          _isLoading = false;
+        });
+      });
+    }
+    _isInit = false;
+    super.didChangeDependencies();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,9 +70,12 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
           )
         ],
       ),
-      drawer:AppDrawer(),
-      body: ProductGrid(showOnlyFavorite),
-      
+      drawer: AppDrawer(),
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
+          : ProductGrid(showOnlyFavorite),
     );
   }
 }

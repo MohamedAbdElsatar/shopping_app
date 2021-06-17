@@ -28,7 +28,7 @@ class ProductItem extends StatelessWidget {
           leading: Consumer<Product>(
             builder: (cnxt, product, _) => IconButton(
               icon: Icon(
-                product.isfavorite ? (Icons.favorite) : (Icons.favorite_border),
+                product.isFavorite ? (Icons.favorite) : (Icons.favorite_border),
               ),
               color: Theme.of(context).accentColor,
               onPressed: () {
@@ -41,7 +41,15 @@ class ProductItem extends StatelessWidget {
             color: Theme.of(context).accentColor,
             onPressed: () {
               cart.addItem(product.id, product.title, product.price);
-              
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('Item added to cart'),
+                action: SnackBarAction(
+                    label: 'UNDO',
+                    onPressed: () {
+                      cart.removeSingleItem(product.id);
+                    }),
+              ));
             },
           ),
         ),
