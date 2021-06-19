@@ -30,15 +30,25 @@ class Order with ChangeNotifier {
     final response = await http.get(Uri.parse(url));
     final extractedData =
         convert.json.decode(response.body) as Map<String, dynamic>;
-    final List ordersList = [];
-    extractedData.forEach((key, value) {
+        if (extractedData ==null) {
+           return;
+        }
+
+    final List<OrderItem> ordersList = [];
+    extractedData.forEach((orderId, orderdata) {
       ordersList.insert(
           0,
           OrderItem(
-              id: key,
-              amount: value['amount'],
-              products:value,
-              dateTime: value['dateTime']));
+              id: orderId,
+              amount: orderdata['amount'],
+              products: (orderdata['products'] as List)
+                  .map((product) => CartItem(
+                      id: product['id'],
+                      title: product['title'],
+                      price: product['price'],
+                      quantity: product['quantity']))
+                  .toList(),
+              dateTime: DateTime.parse(orderdata['dateTime'])));
     });
     _orders = ordersList;
     notifyListeners();
