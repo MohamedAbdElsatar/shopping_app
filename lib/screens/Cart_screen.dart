@@ -82,7 +82,7 @@ class _OrderButtonState extends State<OrderButton> {
           ? CircularProgressIndicator()
           : Text(
               'ORDER NOW',
-              style: TextStyle(color: Theme.of(context).primaryColor),
+              //style: TextStyle(color: Theme.of(context).primaryColor),
             ),
       onPressed: (widget.cart.totalAmount <= 0 || isLoading == true)
           ? null
@@ -99,6 +99,9 @@ class _OrderButtonState extends State<OrderButton> {
               });
               widget.cart.clear();
             },
+            style: TextButton.styleFrom(
+              textStyle: TextStyle(color: Theme.of(context).primaryColor),
+            ),
       //style:TextStyle(color: Theme.of(context).primaryColor),
     );
   }

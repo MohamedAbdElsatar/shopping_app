@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shop_app/models/http_exceptions.dart';
 import 'package:shop_app/providers/products_provider.dart';
 import 'package:shop_app/screens/edit_product_screen.dart';
 
@@ -40,12 +41,15 @@ class UserProductItem extends StatelessWidget {
                     'Product deleted',
                     textAlign: TextAlign.center,
                   )));
-                } catch (error) {
+                }on HttpException catch(_){
                   snackbar.showSnackBar(SnackBar(
                       content: Text(
                     'Deleting failed!',
                     textAlign: TextAlign.center,
                   )));
+                }
+                 catch (error) {
+                 
                 }
               },
               color: Theme.of(context).errorColor,

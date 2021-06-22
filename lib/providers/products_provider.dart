@@ -40,6 +40,10 @@ class ProductsProvider with ChangeNotifier {
     // ),
   ];
 
+  final String authToken;
+  final String userId;
+  ProductsProvider([this.authToken,this.userId,this._items ]);
+
   List<Product> get item {
     return [..._items]; // a copy  of items in case of any failler
   }
@@ -48,10 +52,19 @@ class ProductsProvider with ChangeNotifier {
     return _items.where((productItem) => productItem.isFavorite).toList();
   }
 
-  Future<void> fetchAndSetProducts() async {
-    const uri =
-        'https://flutter-update-6a460-default-rtdb.firebaseio.com/products.json';
+  Future<void> fetchAndSetProducts([bool filterByUser =false]) async {
+    final filterString = filterByUser? 'orderBy="creatorId"&equalTo="$userId"':'';
+
+
+    final uri =
+        'https://flutter-update-6a460-default-rtdb.firebaseio.com/products.json?auth=$authToken?&$filterString';
     //try {
+      
+    final favoriteUrl =
+        'https://flutter-update-6a460-default-rtdb.firebaseio.com/UserFavorites/$userId.json?auth=$authToken';
+     final favoritsResponse = await http.get(Uri.parse(favoriteUrl));
+     final favoriteData = convert.json.decode(favoritsResponse.body);
+   
     final response = await http.get(Uri.parse(uri));
     final extractedData =
         convert.json.decode(response.body) as Map<String, dynamic>;
@@ -67,7 +80,7 @@ class ProductsProvider with ChangeNotifier {
         title: prodData['title'],
         description: prodData['description'],
         price: prodData['price'],
-        isFavorite: prodData['isFavorite'],
+        isFavorite: favoriteData== null? false:favoriteData[prodId]??false,
         imageUrl: prodData['imageUrl'],
       ));
     });
@@ -81,8 +94,8 @@ class ProductsProvider with ChangeNotifier {
   }
 
   Future<void> addProduct(Product product) async {
-    const uri =
-        'https://flutter-update-6a460-default-rtdb.firebaseio.com/products.json';
+    final uri =
+        'https://flutter-update-6a460-default-rtdb.firebaseio.com/products.json?auth=$authToken';
     try {
       final response = await http.post(Uri.parse(uri),
           body: convert.json.encode({
@@ -91,7 +104,8 @@ class ProductsProvider with ChangeNotifier {
             'description': product.description,
             'price': product.price,
             'imageUrl': product.imageUrl,
-            'isFavorite': product.isFavorite
+            'creatorId':userId,
+            
           }));
 
       Product p = Product(
@@ -114,7 +128,7 @@ class ProductsProvider with ChangeNotifier {
 
   Future<void> updateProduct(Product newProduct, String id) async {
     final url =
-        'https://flutter-update-6a460-default-rtdb.firebaseio.com/products/$id.json';
+        'https://flutter-update-6a460-default-rtdb.firebaseio.com/products/$id.json?auth=$authToken';
 
     final productIndex = _items.indexWhere((prod) => prod.id == id);
     if (productIndex >= 0) {
@@ -132,26 +146,30 @@ class ProductsProvider with ChangeNotifier {
   }
 
   Future<void> deleteItem(String id) async {
-    //products/$id.json == to acess the item wanted
-    final url =
-        'https://flutter-update-6a460-default-rtdb.firebaseio.com/products/$id.json';
-    final existingProductIndex =
-        _items.indexWhere((product) => product.id == id);
-    var deletedProduct = _items[existingProductIndex];
+    try {
+//products/$id.json == to acess the item wanted
+      final url =
+          'https://flutter-update-6a460-default-rtdb.firebaseio.com/products/$id.json?auth=$authToken';
+      final existingProductIndex =
+          _items.indexWhere((product) => product.id == id);
+      var deletedProduct = _items[existingProductIndex];
 
-    // delete object before sending request and wait the response
-    _items.removeWhere((product) => product.id == id);
-    notifyListeners();
-
-    final response = await http.delete(Uri.parse(url));
-    // >=400 mean there is an error
-    if (response.statusCode >= 400) {
-      _items.insert(existingProductIndex, deletedProduct);
+      // delete object before sending request and wait the response
+      _items.removeWhere((product) => product.id == id);
       notifyListeners();
-      throw HttpException('There is an error occured!');
+
+      final response = await http.delete(Uri.parse(url));
+      // >=400 mean there is an error
+      if (response.statusCode >= 400) {
+        _items.insert(existingProductIndex, deletedProduct);
+        notifyListeners();
+        throw HttpException('There is an error occured!');
+      }
+      // optimistic updating = delete
+      //assinging (null) to notify dart that oject not needed anymore(remove from memory)
+      deletedProduct = null;
+    } catch (error) {
+      throw error;
     }
-    // optimistic updating = delete
-    //assinging (null) to notify dart that oject not needed anymore(remove from memory)
-    deletedProduct = null;
   }
 }

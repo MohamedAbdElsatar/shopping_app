@@ -24,16 +24,16 @@ class Product with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> toggelefavoriteState() async {
+  Future<void> toggelefavoriteState(String authToken,String userId) async {
     var oldFavorite = isFavorite;
     isFavorite = !isFavorite;
     notifyListeners();
     final url =
-        'https://flutter-update-6a460-default-rtdb.firebaseio.com/products/$id.json';
+        'https://flutter-update-6a460-default-rtdb.firebaseio.com/UserFavorites/$userId/$id.json?auth=$authToken';
 
     try {
-      final response = await http.patch(Uri.parse(url),
-          body: convert.json.encode({'isFavorite': isFavorite}));
+      final response = await http.put(Uri.parse(url),
+          body: convert.json.encode(isFavorite));
 
       if (response.statusCode >= 400) {
         setFavorite(oldFavorite);

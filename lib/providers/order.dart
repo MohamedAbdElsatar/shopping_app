@@ -19,6 +19,9 @@ class OrderItem {
 
 class Order with ChangeNotifier {
   List<OrderItem> _orders = [];
+  final String _authToken;
+  final String userId;
+  Order(this._orders, this._authToken,this.userId,);
 
   List<OrderItem> get order {
     return [..._orders];
@@ -26,13 +29,13 @@ class Order with ChangeNotifier {
 
   Future<void> fetchAndSetOder() async {
     final url =
-        'https://flutter-update-6a460-default-rtdb.firebaseio.com/Orders.json';
+        'https://flutter-update-6a460-default-rtdb.firebaseio.com/Orders/$userId.json?auth=$_authToken';
     final response = await http.get(Uri.parse(url));
     final extractedData =
         convert.json.decode(response.body) as Map<String, dynamic>;
-        if (extractedData ==null) {
-           return;
-        }
+    if (extractedData == null) {
+      return;
+    }
 
     final List<OrderItem> ordersList = [];
     extractedData.forEach((orderId, orderdata) {
@@ -56,7 +59,7 @@ class Order with ChangeNotifier {
 
   Future<void> addOrder(List<CartItem> products, double amount) async {
     final url =
-        'https://flutter-update-6a460-default-rtdb.firebaseio.com/Orders.json';
+        'https://flutter-update-6a460-default-rtdb.firebaseio.com/Orders/$userId.json?auth=$_authToken';
     // time in server and loacel memory the same
     final timeStamp = DateTime.now();
 
